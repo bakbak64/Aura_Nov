@@ -1,0 +1,64 @@
+camera:
+  resolution_width: 640
+  resolution_height: 480
+  fps: 20
+  device_id: 0
+
+detection:
+  model_size: "n"  # nano - fastest on CPU
+  confidence_threshold: 0.25
+  frame_skip: 2  # Process every 2nd frame for performance
+  target_fps: 15
+  classes: ["person", "car", "bicycle", "motorcycle", "bus", "truck", "chair", "table", "stairs", "door", "fire"]
+
+distance:
+  very_close_feet: 3
+  close_feet: 8
+  medium_feet: 15
+  bounding_box_threshold_small: 0.3  # Percentage of frame height for "very close"
+  bounding_box_threshold_large: 0.1  # Percentage of frame height for "far"
+
+face_recognition:
+  tolerance: 0.6
+  cooldown_seconds: 60
+  encoding_model: "hog"  # or "cnn" for better accuracy but slower
+
+alerts:
+  critical:
+    repeat_interval_seconds: 3
+    interrupt_speech: true
+  important:
+    cooldown_seconds: 30
+    interrupt_speech: false
+  informational:
+    cooldown_seconds: 10
+    interrupt_speech: false
+  auto_pause_inactivity_minutes: 15
+
+voice:
+  wake_word: "hey aura"
+  tts_rate: 150
+  tts_volume: 0.8
+  tts_engine: "pyttsx3"  # or "gtts" for online fallback
+  speech_recognition_timeout: 3
+  phrase_time_limit: 5
+
+ocr:
+  language: "eng"
+  preprocessing: true
+  contrast_factor: 1.5
+
+gemini:
+  max_retries: 3
+  timeout_seconds: 10
+  cache_duration_seconds: 10
+  rate_limit_per_minute: 15
+
+session:
+  auto_save_interval_seconds: 30
+  max_log_entries_per_session: 1000
+
+ui:
+  alert_history_limit: 50
+  refresh_interval_ms: 100
+

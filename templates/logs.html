@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA - Session Logs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">AURA</h1>
+            <div class="space-x-4">
+                <a href="/" class="hover:underline">Home</a>
+                <a href="/faces" class="hover:underline">Faces</a>
+                <a href="/logs" class="hover:underline font-bold">Logs</a>
+                <a href="/settings" class="hover:underline">Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4">Session History</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="px-4 py-2 text-left">Session ID</th>
+                            <th class="px-4 py-2 text-left">Start Time</th>
+                            <th class="px-4 py-2 text-left">End Time</th>
+                            <th class="px-4 py-2 text-left">Duration</th>
+                            <th class="px-4 py-2 text-left">Total Alerts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-table">
+                        <tr>
+                            <td colspan="5" class="px-4 py-2 text-center text-gray-500">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4">Event Logs</h2>
+            <div class="mb-4">
+                <select id="session-filter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                    <option value="">All Sessions</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="px-4 py-2 text-left">Timestamp</th>
+                            <th class="px-4 py-2 text-left">Priority</th>
+                            <th class="px-4 py-2 text-left">Event Type</th>
+                            <th class="px-4 py-2 text-left">Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table">
+                        <tr>
+                            <td colspan="4" class="px-4 py-2 text-center text-gray-500">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                const sessions = await response.json();
+
+                const table = document.getElementById('sessions-table');
+                const filter = document.getElementById('session-filter');
+
+                if (sessions.length === 0) {
+                    table.innerHTML = '<tr><td colspan="5" class="px-4 py-2 text-center text-gray-500">No sessions found</td></tr>';
+                    return;
+                }
+
+                table.innerHTML = sessions.map(session => {
+                    const start = new Date(session.start_time).toLocaleString();
+                    const end = session.end_time ? new Date(session.end_time).toLocaleString() : 'Active';
+                    const duration = session.duration_seconds ? formatDuration(session.duration_seconds) : '-';
+                    
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-2">${session.session_id.substring(0, 8)}...</td>
+                            <td class="px-4 py-2">${start}</td>
+                            <td class="px-4 py-2">${end}</td>
+                            <td class="px-4 py-2">${duration}</td>
+                            <td class="px-4 py-2">${session.total_alerts || 0}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                filter.innerHTML = '<option value="">All Sessions</option>' + 
+                    sessions.map(s => `<option value="${s.session_id}">${s.session_id.substring(0, 8)}... - ${new Date(s.start_time).toLocaleDateString()}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+
+        async function loadLogs(sessionId = '') {
+            try {
+                const url = sessionId ? `/api/logs?session_id=${sessionId}&limit=100` : '/api/logs?limit=100';
+                const response = await fetch(url);
+                const logs = await response.json();
+
+                const table = document.getElementById('logs-table');
+
+                if (logs.length === 0) {
+                    table.innerHTML = '<tr><td colspan="4" class="px-4 py-2 text-center text-gray-500">No logs found</td></tr>';
+                    return;
+                }
+
+                table.innerHTML = logs.map(log => {
+                    const priorityClass = {
+                        'critical': 'bg-red-100 text-red-800',
+                        'important': 'bg-yellow-100 text-yellow-800',
+                        'informational': 'bg-blue-100 text-blue-800'
+                    }[log.priority] || 'bg-gray-100 text-gray-800';
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-2">${new Date(log.timestamp).toLocaleString()}</td>
+                            <td class="px-4 py-2"><span class="px-2 py-1 rounded ${priorityClass}">${log.priority}</span></td>
+                            <td class="px-4 py-2">${log.event_type}</td>
+                            <td class="px-4 py-2">${log.message}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading logs:', error);
+            }
+        }
+
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours}h ${minutes}m ${secs}s`;
+        }
+
+        document.getElementById('session-filter').addEventListener('change', (e) => {
+            loadLogs(e.target.value);
+        });
+
+        loadSessions();
+        loadLogs();
+    </script>
+</body>
+</html>
+

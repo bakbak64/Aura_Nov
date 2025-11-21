@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA - Face Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">AURA</h1>
+            <div class="space-x-4">
+                <a href="/" class="hover:underline">Home</a>
+                <a href="/faces" class="hover:underline font-bold">Faces</a>
+                <a href="/logs" class="hover:underline">Logs</a>
+                <a href="/settings" class="hover:underline">Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4">Add New Face</h2>
+            <form id="face-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" id="face-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Relationship</label>
+                    <select id="face-relationship" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="Family">Family</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Caregiver">Caregiver</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                    <input type="file" id="face-photo" accept="image/*" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    <p class="text-sm text-gray-500 mt-1">Upload a clear photo with one face visible</p>
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg w-full">
+                    Add Face
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4">Known Faces</h2>
+            <div id="faces-gallery" class="grid md:grid-cols-3 gap-4">
+                <p class="text-gray-500">Loading faces...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('face-form');
+        const gallery = document.getElementById('faces-gallery');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('name', document.getElementById('face-name').value);
+            formData.append('relationship', document.getElementById('face-relationship').value);
+            formData.append('photo', document.getElementById('face-photo').files[0]);
+
+            try {
+                const response = await fetch('/api/faces', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Face added successfully!');
+                    form.reset();
+                    loadFaces();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        async function loadFaces() {
+            try {
+                const response = await fetch('/api/faces');
+                const faces = await response.json();
+
+                if (faces.length === 0) {
+                    gallery.innerHTML = '<p class="text-gray-500">No faces added yet</p>';
+                    return;
+                }
+
+                gallery.innerHTML = faces.map(face => `
+                    <div class="border border-gray-300 rounded-lg p-4">
+                        <div class="bg-gray-200 h-32 rounded mb-2 flex items-center justify-center">
+                            <p class="text-gray-500">Photo</p>
+                        </div>
+                        <h3 class="font-bold">${face.name}</h3>
+                        <p class="text-sm text-gray-600">${face.relationship}</p>
+                        <p class="text-xs text-gray-500 mt-1">Added: ${new Date(face.created_at).toLocaleDateString()}</p>
+                        <button onclick="deleteFace(${face.id})" class="mt-2 bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-3 rounded w-full">
+                            Delete
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                gallery.innerHTML = '<p class="text-red-500">Error loading faces</p>';
+            }
+        }
+
+        async function deleteFace(id) {
+            if (!confirm('Are you sure you want to delete this face?')) return;
+
+            try {
+                const response = await fetch(`/api/faces/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadFaces();
+                } else {
+                    alert('Error deleting face');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        loadFaces();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+venv/
+ENV/
+env/
+.venv/
+build/
+dist/
+*.egg-info/
+*.egg
+
+# OS and Editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+logs/
+
+# Flask (if instance folder used)
+instance/
+
+# Uploaded, generated, private
+static/uploads/
+static/temp/
+static/media/
+models/
+weights/
+yolov8*.pt
+db.sqlite3
+*.db
+*.sqlite
+
+# DeepFace/third-party caches
+.deepface/
+.deepface_cache/
+
+# Tensorflow/keras, checkpoints
+checkpoint/*
+*.h5
+*.pb
+*.ckpt
+
+# Ignore ultralytics/cache, yolov8 cache
+ultralytics_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# If you use npm or yarn anywhere
+node_modules/
+
+# Misc
+*.bak
+*.tmp
+
