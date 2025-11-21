@@ -25,6 +25,7 @@ socket.on('session_paused', (data) => {
 });
 
 socket.on('alert', (data) => {
+    console.log('Alert data received:', data); // Debug log
     console.log('Alert received:', data);
     addAlertToLog(data);
 });
@@ -40,6 +41,7 @@ socket.on('voice_command', (data) => {
 });
 
 socket.on('frame', (data) => {
+    console.log('Frame data received:', data); // Debug log
     const img = document.getElementById('camera-feed');
     if (img) {
         img.src = data.data;
@@ -124,6 +126,6 @@ function requestFrame() {
 }
 
 if (document.getElementById('camera-feed')) {
-    requestFrame();
+    setInterval(requestFrame, 100);
 }
 
